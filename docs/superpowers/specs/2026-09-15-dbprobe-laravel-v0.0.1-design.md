@@ -10,31 +10,29 @@
 
 `dbprobe-laravel` is a local-first, read-only database diagnostics package for Laravel applications.
 
-The v0.0.1 milestone deliberately proves one narrow capability:
+The v0.0.1 milestone proves one narrow capability:
 
-> Can the package inspect the configured MySQL schema and produce deterministic, evidence-backed structural findings without reading application row data or modifying the database?
+> Inspect the configured MySQL schema and produce deterministic, evidence-backed structural findings without reading application row data or modifying the database.
 
 The first release is not a general database optimizer, query profiler, monitoring product, or AI agent. It establishes the collection, normalization, finding, evidence, reporting, privacy, and test contracts required for later capabilities.
 
 ## 2. Product Positioning
 
-Package identity:
-
 ```text
-Repository:        kefyusuf/dbprobe-laravel
-Composer package:  kefyusuf/dbprobe-laravel
-Display name:      DBProbe for Laravel
-PHP namespace:     DbProbe\Laravel
-Artisan prefix:    dbprobe:
-Artifact directory:.dbprobe/
-License:           MIT
+Repository:         kefyusuf/dbprobe-laravel
+Composer package:   kefyusuf/dbprobe-laravel
+Display name:       DBProbe for Laravel
+PHP namespace:      DbProbe\Laravel
+Artisan prefix:     dbprobe:
+Artifact directory: .dbprobe/
+License:            MIT
 ```
 
 Short positioning:
 
 > Local-first, read-only database diagnostics for Laravel applications.
 
-The package is a Laravel-specific companion to the separate `dbprobe` database-intelligence runtime. v0.0.1 has no runtime dependency on the Go-based `dbprobe` project.
+The package is a Laravel-specific companion to the separate `dbprobe` database-intelligence runtime. v0.0.1 has no runtime dependency on that Go-based project.
 
 ## 3. v0.0.1 Scope
 
@@ -55,7 +53,7 @@ The package is a Laravel-specific companion to the separate `dbprobe` database-i
   - `mysql.redundant_index`
   - `mysql.missing_primary_key`
 - Findings-first terminal output.
-- Versioned JSON report at `.dbprobe/report.json` by default.
+- Versioned JSON report at `.dbprobe/report.json`.
 - Structured caveats when analysis coverage is limited.
 - Contract, unit, package feature, and real-MySQL integration tests.
 
@@ -65,10 +63,10 @@ The package is a Laravel-specific companion to the separate `dbprobe` database-i
 - Docker orchestration by the package.
 - Mock or synthetic data generation.
 - Eloquent model/source-code analysis.
-- Query capture or query workload analysis.
+- Query capture or workload analysis.
 - N+1 detection.
 - `EXPLAIN` or `EXPLAIN ANALYZE`.
-- Missing/composite index recommendations derived from workloads.
+- Workload-derived missing/composite-index recommendations.
 - Automatic migration generation.
 - Automatic index creation or removal.
 - LLM or agent integration.
@@ -77,26 +75,21 @@ The package is a Laravel-specific companion to the separate `dbprobe` database-i
 - Production monitoring or daemon mode.
 - SaaS, telemetry, or remote upload.
 - CI failure based on findings.
+- User-publishable package configuration.
 
 ## 4. Design Principles
 
 ### 4.1 Deterministic first
 
-The same normalized schema snapshot and ruleset must produce the same findings in the same canonical order.
-
-LLMs and agents are not diagnostic authorities and are not part of v0.0.1.
+The same normalized schema snapshot and ruleset must produce the same findings in the same canonical order. LLMs and agents are not diagnostic authorities and are not part of v0.0.1.
 
 ### 4.2 Read-only by construction
 
-Package scan code must not execute DDL or DML. It reads metadata only.
-
-No application rows are sampled. No schema changes are performed. No session mutation is required for normal operation.
+Package scan code must not execute DDL or DML. No application rows are sampled. No schema changes are performed. No session mutation is required for normal operation.
 
 ### 4.3 Conservative findings
 
-The package prefers a documented limitation over an unsupported assertion. When metadata is ambiguous, a rule skips the ambiguous case and emits a structured caveat where appropriate.
-
-A finding is not an automatic remediation instruction.
+The package prefers a documented limitation over an unsupported assertion. When metadata is ambiguous, a rule skips the ambiguous case and emits a structured caveat where appropriate. A finding is never an automatic remediation instruction.
 
 ### 4.4 Evidence and uncertainty are first-class
 
@@ -104,7 +97,7 @@ Each finding carries confidence, exactness, an object reference, and structured 
 
 ### 4.5 Minimal public surface
 
-v0.0.1 supports the CLI, its documented option, configuration keys, JSON report contract, and finding IDs. Internal PHP interfaces are architectural seams, not a third-party plugin API.
+v0.0.1 supports the CLI, its documented option, the JSON report contract, and finding IDs. Internal PHP interfaces are architectural seams, not a third-party plugin API.
 
 ### 4.6 Bounded cost
 
@@ -139,10 +132,9 @@ php artisan dbprobe:scan --connection=mysql
 Connection resolution order:
 
 1. `--connection` when provided.
-2. `dbprobe.connection` when configured.
-3. Laravel `database.default`.
+2. Laravel `database.default` otherwise.
 
-Default report path:
+The report path is intentionally fixed in v0.0.1:
 
 ```text
 .dbprobe/report.json
@@ -188,50 +180,45 @@ ScanResult
     +--> JsonReportWriter
 ```
 
-### 7.1 Dependency responsibilities
-
-`ScanCommand`:
+### 7.1 `ScanCommand`
 
 - reads CLI options;
 - invokes `ScanDatabase`;
 - renders the terminal result;
 - writes the JSON report;
-- returns the documented exit code.
+- returns the documented exit code;
+- contains no SQL or rule logic.
 
-It contains no SQL or rule logic.
+### 7.2 `ScanDatabase`
 
-`ScanDatabase`:
-
-- resolves the selected Laravel database connection;
+- resolves the selected Laravel connection;
 - validates that the target is supported MySQL;
 - invokes metadata collection;
 - executes deterministic rules;
-- returns a `ScanResult`.
+- returns a `ScanResult`;
+- does not format terminal output or serialize JSON.
 
-It does not format terminal output or serialize JSON.
-
-`MySqlSchemaCollector`:
+### 7.3 `MySqlSchemaCollector`
 
 - owns MySQL metadata reads;
 - maps raw metadata rows into immutable schema objects;
 - does not evaluate findings.
 
-`SchemaSnapshot`:
+### 7.4 `SchemaSnapshot`
 
 - contains the normalized structural model;
 - is immutable;
 - produces a canonical structural fingerprint.
 
-`RuleEngine`:
+### 7.5 `RuleEngine`
 
-- evaluates all built-in rules against a snapshot;
+- evaluates built-in rules against a snapshot;
 - canonicalizes finding order;
 - does not access Laravel, PDO, the filesystem, or remote services.
 
-`Reporting`:
+### 7.6 Reporting
 
-- receives `ScanResult` only;
-- does not query the database.
+Reporters receive `ScanResult` only and never query the database.
 
 ## 8. Repository Structure
 
@@ -242,8 +229,6 @@ dbprobe-laravel/
 ├── .github/
 │   └── workflows/
 │       └── tests.yml
-├── config/
-│   └── dbprobe.php
 ├── docs/
 │   └── superpowers/
 │       ├── specs/
@@ -302,27 +287,26 @@ dbprobe-laravel/
 └── phpunit.xml.dist
 ```
 
-No empty future-facing scaffold should be committed merely to match this tree. Files are added with working behavior and tests.
+No empty future-facing scaffold is committed merely to match this tree. Files are added with working behavior and tests.
 
-## 9. Configuration
+## 9. No Package Configuration Surface in v0.0.1
 
-Initial configuration is deliberately small:
+There is no publishable `config/dbprobe.php` in v0.0.1.
 
-```php
-return [
-    'connection' => null,
+The package deliberately keeps configuration out of the first public contract:
 
-    'report' => [
-        'path' => base_path('.dbprobe/report.json'),
-    ],
-];
+```text
+connection = --connection when supplied, otherwise Laravel database.default
+report path = .dbprobe/report.json
+rules = all three built-in rules
+finding policy = informational only; successful scan exits 0
 ```
 
-v0.0.1 does not provide configurable rule selection, severity thresholds, suppression lists, fail-on-finding behavior, telemetry, LLM configuration, or concurrency controls.
+Configurable report paths, rule enable/disable controls, severity thresholds, suppressions, CI policies, telemetry, AI providers, and concurrency controls require separate future design decisions.
 
 ## 10. Metadata Collection Contract
 
-The collector uses MySQL metadata sources such as:
+Primary MySQL metadata sources:
 
 ```text
 information_schema.tables
@@ -330,7 +314,7 @@ information_schema.columns
 information_schema.statistics
 ```
 
-It may additionally read selected server/session variables required to interpret metadata safely.
+Selected server/session metadata may additionally be read when required to interpret schema metadata safely.
 
 ### 10.1 Query budget
 
@@ -346,7 +330,7 @@ Expected shape:
 0/1 × GIPK visibility metadata
 ```
 
-Disallowed implementation patterns:
+Disallowed patterns:
 
 ```text
 - table-by-table SHOW INDEX
@@ -420,7 +404,7 @@ EXPRESSION
 
 ### 11.1 Database identity
 
-Stored report identity may include:
+Report identity may include:
 
 ```text
 connection name
@@ -481,7 +465,7 @@ prefix length
 sort direction
 ```
 
-Normalization examples:
+Normalization:
 
 ```text
 COLLATION=A    -> asc
@@ -535,11 +519,11 @@ Excluded:
 
 Canonicalization rules:
 
-- tables are sorted by exact identifier;
-- columns are sorted by ordinal position;
-- indexes are sorted by exact index name;
-- key parts are sorted by `SEQ_IN_INDEX`;
-- booleans/enums have canonical string forms;
+- tables sorted by exact identifier;
+- columns sorted by ordinal position;
+- indexes sorted by exact index name;
+- key parts sorted by `SEQ_IN_INDEX`;
+- booleans/enums use canonical string forms;
 - identifier case is preserved;
 - volatile values are removed before hashing.
 
@@ -563,25 +547,10 @@ Guidance
 
 Initial enum values:
 
-Severity:
-
 ```text
-warning
-info
-```
-
-Confidence:
-
-```text
-high
-medium
-```
-
-Exactness:
-
-```text
-exact
-inferred
+Severity:   warning | info
+Confidence: high | medium
+Exactness:  exact | inferred
 ```
 
 Machine consumers use stable fields and structured evidence. They must not parse prose fields such as `title`, `summary`, or `guidance`.
@@ -622,7 +591,7 @@ Meaning:
 
 Only conservative, column-based, observable secondary BTREE indexes are evaluated.
 
-The comparison signature includes:
+Comparison signature:
 
 - uniqueness;
 - index type;
@@ -630,13 +599,12 @@ The comparison signature includes:
 - ordered key parts;
 - key-part kind;
 - column identity;
-- expression identity where represented, although expression indexes are excluded in v0.0.1;
 - prefix length;
 - sort direction.
 
 Index name is not part of the equivalence signature.
 
-### 15.2 Excluded from exact duplicate analysis
+### 15.2 Exclusions
 
 - functional indexes;
 - multi-valued indexes;
@@ -650,9 +618,7 @@ Skipped supported-but-unanalysed structures create caveats where useful.
 
 ### 15.3 Grouping
 
-Equivalent indexes are grouped into one finding rather than pairwise findings.
-
-Three equivalent indexes produce one duplicate-index finding with evidence for all three.
+Equivalent indexes are grouped into one finding rather than pairwise findings. Three equivalent indexes produce one finding with evidence for all three.
 
 ### 15.4 Output semantics
 
@@ -662,7 +628,7 @@ confidence: high
 exactness:  exact
 ```
 
-Guidance must say to review before removal. It must not claim an index is safe to drop.
+Guidance says to review before removal; it never claims an index is safe to drop.
 
 ## 16. Rule: `mysql.redundant_index`
 
@@ -702,7 +668,7 @@ Matching prefix key parts must have identical:
 No finding when:
 
 - the short index is unique;
-- the covering relation is not leftmost-prefix;
+- the relation is not a leftmost prefix;
 - the long index is the primary key;
 - either relevant index is invisible;
 - prefix lengths differ;
@@ -718,7 +684,7 @@ confidence: medium
 exactness:  inferred
 ```
 
-Guidance must require workload/index-usage validation before removal.
+Guidance requires workload/index-usage validation before removal.
 
 ## 17. Rule: `mysql.missing_primary_key`
 
@@ -726,7 +692,7 @@ Meaning:
 
 > No observable `PRIMARY` index was found for a base table.
 
-The rule must not claim that InnoDB has no internal clustered index.
+The rule does not claim that InnoDB has no internal clustered index.
 
 ### 17.1 Explicit primary key
 
@@ -790,15 +756,13 @@ mysql.gipk_metadata_hidden
 mysql.gipk_visibility_unknown
 ```
 
-Views are declared outside v0.0.1 analysis scope and represented as an inventory count rather than a caveat.
+Views are outside v0.0.1 rule scope and represented as an inventory count rather than a caveat.
 
-`0 findings + limited coverage` must never be rendered as equivalent to `0 findings + complete coverage`.
+`0 findings + limited coverage` is not rendered as equivalent to `0 findings + complete coverage`.
 
 ## 19. Scan Failure Model
 
 ### 19.1 Findings are not failures
-
-Finding presence does not fail the command in v0.0.1.
 
 ```text
 exit 0 — scan completed, regardless of finding count
@@ -811,7 +775,7 @@ exit 1 — runtime, metadata collection, or report-write failure
 exit 2 — invalid usage or unsupported connection/driver/server family
 ```
 
-Examples that fail closed:
+Fail-closed examples:
 
 - connection cannot be resolved;
 - database cannot be reached;
@@ -850,8 +814,6 @@ Top-level shape:
 
 ### 20.1 Scope declaration
 
-The report explicitly states that v0.0.1 does not inspect row data, query workload, source code, or views as rule targets.
-
 Example:
 
 ```json
@@ -868,19 +830,11 @@ Example:
 
 ### 20.2 Format versioning
 
-The first format is `0.1.0`, not `1.0.0`.
-
-Within the pre-1.0 period, breaking changes may advance the minor version. `1.0.0` is reserved until the contract is exercised by at least one external consumer, such as the main `dbprobe` runtime or CI integration.
-
-Consumers:
-
-- reject unknown major versions after 1.0 stabilization;
-- ignore unknown compatible fields;
-- use structured IDs/evidence rather than prose.
+The first report contract is `0.1.0`. During the pre-1.0 period, a breaking report-contract change advances the minor version. `1.0.0` is reserved until the format is exercised by a real external consumer such as the main `dbprobe` runtime or CI integration.
 
 ### 20.3 JSON Schema
 
-The repository contains:
+Repository file:
 
 ```text
 resources/schemas/schema-scan-report-v0.1.schema.json
@@ -892,17 +846,17 @@ Schema identifier:
 urn:dbprobe:laravel:schema-scan-report:v0.1
 ```
 
-No runtime JSON-Schema validation dependency is required. The schema is used by tests, fixtures, documentation, and future consumers.
+No runtime JSON-Schema validator is required. The schema is used by tests, fixtures, documentation, and future consumers.
 
 ## 21. Report Write Safety
 
-The package guarantees that it does not intentionally expose a partially written JSON report and does not discard a previously valid report before the new report is ready.
+The package does not intentionally expose a partially written JSON report and does not discard a previously valid report before the new report is ready.
 
 Process:
 
 1. create a temporary file in the target directory;
-2. serialize and write the complete new report;
-3. validate that the temporary content is valid JSON;
+2. serialize and write the complete report;
+3. validate that temporary content is valid JSON;
 4. replace the target using the safest platform-supported operation;
 5. preserve the previous valid report if replacement fails;
 6. clean up temporary artifacts.
@@ -911,7 +865,7 @@ The design does not claim identical filesystem-level atomic-replace semantics ac
 
 ## 22. Terminal Report
 
-Human-readable output is findings-first and concise:
+Example:
 
 ```text
 DBProbe for Laravel
@@ -945,7 +899,7 @@ No database changes were made.
 Report: .dbprobe/report.json
 ```
 
-Terminal output must distinguish complete and limited coverage.
+Terminal output distinguishes complete and limited coverage.
 
 ## 23. Test Strategy
 
@@ -963,23 +917,23 @@ Covers:
 - duplicate rule positive/negative cases;
 - redundant rule positive/negative cases;
 - missing-primary-key positive/negative cases;
-- caveat logic that can be tested from normalized metadata.
+- caveat logic testable from normalized metadata.
 
 ### 23.2 Package feature
 
-Uses Orchestra Testbench without requiring real MySQL for most tests.
+Uses Orchestra Testbench without real MySQL for most tests.
 
 Covers:
 
 - package auto-discovery/bootstrap;
 - service-provider registration;
 - `dbprobe:scan` registration;
-- connection option propagation;
+- `--connection` propagation;
+- fallback to Laravel `database.default`;
 - exit codes;
 - terminal behavior;
 - report writer behavior;
-- failure redaction;
-- configuration precedence.
+- failure redaction.
 
 ### 23.3 MySQL integration
 
@@ -996,7 +950,7 @@ unique_fallback_records
 view_records
 ```
 
-Integration tests verify actual `information_schema` mapping and rule outcomes.
+Tests verify actual `information_schema` mapping and rule outcomes.
 
 ### 23.4 Contract
 
@@ -1014,15 +968,15 @@ Covers:
 
 ## 24. Read-Only Verification
 
-Integration tests observe SQL executed by package scan code.
+Integration tests observe SQL executed by package scan code after fixture/bootstrap setup.
 
-Allowed:
+Allowed package scan statements:
 
 ```text
 SELECT
 ```
 
-Forbidden:
+Forbidden package scan statements:
 
 ```text
 INSERT
@@ -1035,7 +989,7 @@ SET
 EXPLAIN ANALYZE
 ```
 
-Fixture setup may use DDL before the package scan begins; fixture DDL is not package behavior.
+Fixture setup may use DDL before the DBProbe scan starts; fixture DDL is test-harness behavior, not package scan behavior.
 
 ## 25. CI Matrix
 
@@ -1064,7 +1018,7 @@ Windows smoke covers package bootstrap, path handling, UTF-8 JSON, temporary-fil
 
 ## 26. Quality Gates
 
-Expected verification commands include:
+Expected verification commands:
 
 ```bash
 composer validate --strict
@@ -1078,11 +1032,11 @@ vendor/bin/phpunit --testsuite=Integration
 
 PHPStan starts at level 8.
 
-No percentage coverage gate is required for v0.0.1. Behavioral coverage of rules, failure paths, metadata query budget, read-only posture, contract stability, and determinism is more important than a raw percentage target.
+No percentage coverage gate is required for v0.0.1. Behavioral coverage of rules, failure paths, metadata-query budget, read-only posture, contract stability, and determinism is more important than a raw percentage target.
 
 ## 27. Composer and Runtime Dependencies
 
-Runtime requirements should be limited to the Illuminate components actually required, expected to include:
+Runtime requirements are limited to the Illuminate components actually required, expected to include:
 
 ```text
 illuminate/console
@@ -1090,22 +1044,20 @@ illuminate/database
 illuminate/support
 ```
 
-The package should not require the complete `laravel/framework` package solely for convenience.
+The package does not require the complete `laravel/framework` solely for convenience.
 
 Development dependencies may include Orchestra Testbench, PHPUnit, PHPStan/Larastan as appropriate, and Pint.
 
-The runtime must not add:
+Runtime must not add:
 
-- HTTP clients solely for DBProbe;
+- DBProbe-specific HTTP clients;
 - LLM SDKs;
 - telemetry SDKs;
 - queue/cache packages;
 - JSON Schema runtime validators;
 - remote logging clients.
 
-`composer.lock` is not committed for this reusable library.
-
-`composer.json` does not contain a fixed `version` field; release versions come from Git tags/package metadata.
+`composer.lock` is not committed for this reusable library. `composer.json` contains no fixed `version` field; release versions come from Git tags/package metadata.
 
 ## 28. Public API Boundary
 
@@ -1113,15 +1065,15 @@ Supported v0.0.1 external contract:
 
 1. `php artisan dbprobe:scan`;
 2. `--connection`;
-3. documented `config/dbprobe.php` keys;
+3. fixed artifact path `.dbprobe/report.json`;
 4. JSON report format `dbprobe.laravel.schema-scan`;
 5. finding IDs.
 
-Internal PHP DTOs, rule interfaces, collector contracts, container bindings, and orchestration services may evolve during the 0.x series and are not yet third-party extension APIs.
+Internal PHP DTOs, rule interfaces, collector contracts, container bindings, and orchestration services may evolve during the 0.x series and are not third-party extension APIs.
 
 ## 29. README Contract
 
-Initial README should document:
+Initial README documents:
 
 1. project status;
 2. what DBProbe for Laravel does;
@@ -1137,7 +1089,7 @@ Initial README should document:
 12. development/testing;
 13. license.
 
-README must state clearly:
+README states clearly:
 
 ```text
 - No row data is collected.
@@ -1216,7 +1168,7 @@ main
 
 No `develop` branch is needed.
 
-The approved design is the first repository commit on `main`. Implementation starts only after the design has been reviewed and an implementation plan has been approved.
+The approved design is the first repository artifact on `main`. Implementation starts only after the design has been reviewed and an implementation plan has been approved.
 
 Implementation commits should be small and behavior-oriented, for example:
 
@@ -1230,7 +1182,7 @@ ci: verify supported runtime matrix
 docs: document schema scan usage
 ```
 
-The implementation branch is merged only after its required quality gates pass. `v0.0.1` is tagged only after all release criteria are satisfied.
+The implementation branch is merged only after required quality gates pass. `v0.0.1` is tagged only after all release criteria are satisfied.
 
 ## 32. Completion Criteria
 
@@ -1259,185 +1211,55 @@ v0.0.1 is complete only when all of the following are true:
 
 ## 33. Locked Decisions
 
-### DLR-001 — Product scope
-
-v0.0.1 is a Laravel 12/13, MySQL-only, read-only Schema Scan package.
-
-### DLR-002 — Independent package
-
-The package operates without the main `dbprobe` runtime.
-
-### DLR-003 — Finding namespace
-
-Finding IDs use the engine-namespaced `mysql.*` form compatible with the main `dbprobe` concepts.
-
-### DLR-004 — Initial findings
-
-Only `mysql.duplicate_index`, `mysql.redundant_index`, and `mysql.missing_primary_key` are included.
-
-### DLR-005 — No AI dependency
-
-LLMs, agents, query analysis, and auto-remediation are outside v0.0.1.
-
-### DLR-006 — Internal flow
-
-The core flow is Command -> Scan service -> Collector -> Snapshot -> Rule engine -> Reporters.
-
-### DLR-007 — Internal seams
-
-`SchemaCollector` and `Rule` are internal architectural seams, not public plugin contracts.
-
-### DLR-008 — Bulk metadata collection
-
-Metadata is collected through a bounded number of bulk queries rather than table-by-table inspection.
-
-### DLR-009 — Pure rules
-
-Rules evaluate snapshots without database/filesystem/Laravel/remote access.
-
-### DLR-010 — Immutable snapshot
-
-The normalized schema snapshot is immutable and canonicalized.
-
-### DLR-011 — Structural fingerprint
-
-Each snapshot carries a stable SHA-256 structural fingerprint.
-
-### DLR-012 — Main-project conceptual compatibility
-
-Finding fields remain conceptually compatible with the main `dbprobe` finding model.
-
-### DLR-013 — Findings do not fail CI
-
-v0.0.1 returns zero for successful scans even when findings exist.
-
-### DLR-014 — Safe report replacement
-
-Reports are written through a temporary complete file and safely replace the previous valid report.
-
-### DLR-015 — YAGNI
-
-No facade, adapter registry, event system, persistence store, plugin loader, or AI client is included.
-
-### DLR-016 — Pre-1.0 report contract
-
-JSON report format starts at `0.1.0`.
-
-### DLR-017 — Structured machine contract
-
-Consumers use IDs/enums/evidence, not prose parsing.
-
-### DLR-018 — Structural data only
-
-No rows, application SQL, credentials, or connection endpoints are collected.
-
-### DLR-019 — No full schema manifest artifact yet
-
-The report contains inventory, fingerprint, findings, evidence, and caveats, not a standalone full schema export.
-
-### DLR-020 — Canonical fingerprint projection
-
-Volatile and approximate fields are excluded from the fingerprint.
-
-### DLR-021 — Conservative duplicate analysis
-
-Exact duplicate findings are limited to safely comparable column-based BTREE secondary indexes.
-
-### DLR-022 — Duplicate grouping
-
-Equivalent indexes are reported as one grouped finding.
-
-### DLR-023 — Redundancy means candidate
-
-Left-prefix redundancy is a workload-validation candidate, never a drop authorization.
-
-### DLR-024 — Redundancy exclusions
-
-Unique, primary-covering, invisible, functional, prefix-mismatched, and order-mismatched cases are conservatively excluded.
-
-### DLR-025 — Primary-key semantics
-
-Missing-primary-key analysis distinguishes explicit primary keys from eligible `UNIQUE NOT NULL` InnoDB fallback candidates.
-
-### DLR-026 — GIPK ambiguity
-
-Ambiguous/hidden generated primary-key metadata causes a skip/caveat rather than a false-positive finding.
-
-### DLR-027 — Fail closed on core metadata failure
-
-Missing core metadata prevents a new successful report.
-
-### DLR-028 — Limited coverage is explicit
-
-Unsupported-but-observable structures may be skipped with `analysis_coverage=limited` and structured caveats.
-
-### DLR-029 — Contract fixtures
-
-The JSON contract is protected by a versioned JSON Schema and golden tests.
-
-### DLR-030 — Format stabilization later
-
-Report format reaches `1.0.0` only after real external-consumer validation.
-
-### DLR-031 — Cross-platform write guarantee
-
-The guarantee is no partial-success report and preservation of the previous valid report on failed replacement, not identical filesystem atomicity everywhere.
-
-### DLR-032 — Four test layers
-
-Unit, package feature, MySQL integration, and contract tests are mandatory.
-
-### DLR-033 — Five-query normal-path budget
-
-Normal metadata collection uses at most five read-only SELECTs independent of table count.
-
-### DLR-034 — No writes by scan code
-
-Package scan behavior executes no DDL, DML, or session-mutating statement.
-
-### DLR-035 — Bounded CI matrix
-
-CI verifies representative minimum/current runtime boundaries rather than every cross-product.
-
-### DLR-036 — Windows smoke
-
-Windows verifies package bootstrap and report/path semantics.
-
-### DLR-037 — Quality gates
-
-Composer validation, Pint, PHPStan level 8, PHPUnit suites, and real MySQL integration tests form the initial gate.
-
-### DLR-038 — Minimal runtime dependencies
-
-Only necessary Illuminate components are runtime dependencies.
-
-### DLR-039 — Library versioning conventions
-
-No committed `composer.lock` and no fixed Composer `version` field.
-
-### DLR-040 — Limited public API
-
-CLI/config/report/finding IDs are supported external contracts; internal PHP types are not frozen plugin APIs.
-
-### DLR-041 — Vertical test-first delivery
-
-Implementation proceeds by working vertical slices without speculative scaffolding.
-
-### DLR-042 — Simple branching
-
-Use `main` plus short-lived feature branches; no `develop` branch.
-
-### DLR-043 — Design first
-
-This approved design document is the first repository commit.
-
-### DLR-044 — Release only after evidence
-
-`v0.0.1` is tagged only when all completion criteria and CI gates pass.
+- **DLR-001:** v0.0.1 is a Laravel 12/13, MySQL-only, read-only Schema Scan package.
+- **DLR-002:** The package operates without the main `dbprobe` runtime.
+- **DLR-003:** Finding IDs use the engine-namespaced `mysql.*` form.
+- **DLR-004:** Initial findings are `mysql.duplicate_index`, `mysql.redundant_index`, and `mysql.missing_primary_key` only.
+- **DLR-005:** LLMs, agents, query analysis, and auto-remediation are outside v0.0.1.
+- **DLR-006:** Core flow is Command -> Scan service -> Collector -> Snapshot -> Rule engine -> Reporters.
+- **DLR-007:** `SchemaCollector` and `Rule` are internal seams, not public plugin contracts.
+- **DLR-008:** Metadata uses bounded bulk queries rather than per-object inspection.
+- **DLR-009:** Rules are pure with respect to database/filesystem/Laravel/remote access.
+- **DLR-010:** `SchemaSnapshot` is immutable and canonicalized.
+- **DLR-011:** Each snapshot carries a stable SHA-256 structural fingerprint.
+- **DLR-012:** Finding fields remain conceptually compatible with the main `dbprobe` project.
+- **DLR-013:** Successful scans exit 0 even when findings exist.
+- **DLR-014:** Reports are staged completely before replacing the previous valid report.
+- **DLR-015:** No facade, adapter registry, event system, persistence store, plugin loader, or AI client is included.
+- **DLR-016:** JSON report format starts at `0.1.0`.
+- **DLR-017:** Machine consumers use IDs/enums/evidence rather than prose parsing.
+- **DLR-018:** No rows, application SQL, credentials, or connection endpoints are collected.
+- **DLR-019:** No standalone full-schema manifest artifact exists in v0.0.1.
+- **DLR-020:** Volatile and approximate fields are excluded from the fingerprint.
+- **DLR-021:** Exact duplicate findings are limited to safely comparable column-based BTREE secondary indexes.
+- **DLR-022:** Equivalent indexes are reported as one grouped finding.
+- **DLR-023:** Left-prefix redundancy is a workload-validation candidate, never a drop authorization.
+- **DLR-024:** Unique, primary-covering, invisible, functional, prefix-mismatched, and order-mismatched cases are conservatively excluded from redundant findings.
+- **DLR-025:** Missing-primary-key analysis distinguishes explicit primary keys from eligible `UNIQUE NOT NULL` InnoDB fallback candidates.
+- **DLR-026:** Ambiguous/hidden generated-primary-key metadata causes a skip/caveat rather than a false-positive finding.
+- **DLR-027:** Missing core metadata prevents a new successful report.
+- **DLR-028:** Limited analysis coverage is explicit and machine-readable.
+- **DLR-029:** JSON contract is protected by a versioned JSON Schema and golden tests.
+- **DLR-030:** Report format reaches `1.0.0` only after real external-consumer validation.
+- **DLR-031:** Cross-platform report guarantees focus on no partial-success artifact and preservation of the previous valid report, not identical filesystem atomicity.
+- **DLR-032:** Unit, package feature, MySQL integration, and contract tests are mandatory.
+- **DLR-033:** Normal metadata collection uses at most five read-only SELECTs independent of table count.
+- **DLR-034:** Package scan behavior executes no DDL, DML, or session-mutating statement.
+- **DLR-035:** CI verifies representative support boundaries rather than every cross-product.
+- **DLR-036:** Windows verifies package bootstrap and report/path semantics.
+- **DLR-037:** Composer validation, Pint, PHPStan level 8, PHPUnit suites, and real MySQL integration form the initial quality gate.
+- **DLR-038:** Runtime dependencies are limited to necessary Illuminate components.
+- **DLR-039:** No committed `composer.lock` and no fixed Composer `version` field.
+- **DLR-040:** CLI, `--connection`, fixed report path, JSON format, and finding IDs are the supported external surface; internal PHP types are not frozen APIs.
+- **DLR-041:** Implementation proceeds by working test-first vertical slices without speculative scaffolding.
+- **DLR-042:** Use `main` plus short-lived feature branches; no `develop` branch.
+- **DLR-043:** The approved design document precedes implementation.
+- **DLR-044:** `v0.0.1` is tagged only when completion criteria and CI gates pass.
+- **DLR-045:** v0.0.1 has no publishable package config; connection selection is CLI-or-Laravel-default and report location is fixed.
 
 ## 34. Deferred Evolution
 
-The architecture intentionally leaves room for later, separately designed milestones such as:
+The architecture leaves room for separately designed later milestones such as:
 
 ```text
 - query workload capture through Laravel runtime/test execution;
