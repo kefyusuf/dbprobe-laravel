@@ -1,0 +1,79 @@
+{
+  "$schema": "https://getcomposer.org/schema.json",
+  "name": "laravel-context-lab/named-route-lock-authoring",
+  "description": "Public-only Composer lock authoring input for Laravel Context Lab",
+  "type": "project",
+  "require": {
+    "php": "^8.3",
+    "laravel/framework": "12.41.1"
+  },
+  "require-dev": {
+    "laravel/boost": "dev-m1-pin",
+    "nunomaduro/collision": "^8.6",
+    "phpunit/phpunit": "^11.5.3"
+  },
+  "repositories": [
+    {
+      "type": "package",
+      "package": {
+        "name": "laravel/boost",
+        "version": "dev-m1-pin",
+        "type": "library",
+        "source": {
+          "type": "git",
+          "url": "https://github.com/laravel/boost.git",
+          "reference": "c0b668cd2d5e565507b5bd05ee71f8e322c660e7"
+        },
+        "dist": {
+          "type": "zip",
+          "url": "https://github.com/laravel/boost/archive/c0b668cd2d5e565507b5bd05ee71f8e322c660e7.zip",
+          "reference": "c0b668cd2d5e565507b5bd05ee71f8e322c660e7"
+        },
+        "require": {
+          "php": "^8.2",
+          "guzzlehttp/guzzle": "^7.9|^8.0",
+          "illuminate/console": "^11.45.3|^12.41.1|^13.0",
+          "illuminate/contracts": "^11.45.3|^12.41.1|^13.0",
+          "illuminate/routing": "^11.45.3|^12.41.1|^13.0",
+          "illuminate/support": "^11.45.3|^12.41.1|^13.0",
+          "laravel/mcp": "^0.7.1|^0.8.0|^0.9.0|^1.0",
+          "laravel/prompts": "^0.3.10",
+          "laravel/roster": "^1.0.0"
+        },
+        "autoload": {
+          "psr-4": {
+            "Laravel\\Boost\\": "src/"
+          }
+        },
+        "extra": {
+          "laravel": {
+            "providers": [
+              "Laravel\\Boost\\BoostServiceProvider"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": false,
+    "optimize-autoloader": true,
+    "platform": {
+      "php": "8.3.0"
+    },
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
