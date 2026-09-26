@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - tmp/lclab-composer-lock
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
