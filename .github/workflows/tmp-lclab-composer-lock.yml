@@ -1,0 +1,45 @@
+name: Temporary Laravel Context Lab Composer Lock
+
+on:
+  push:
+    branches:
+      - tmp/lclab-composer-lock
+
+permissions:
+  contents: read
+
+jobs:
+  author-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: .lclab-lock
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP and Composer
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:2.10.3
+
+      - name: Validate public Composer input
+        run: composer validate --strict --no-check-publish --no-interaction
+
+      - name: Resolve frozen dependency graph
+        run: composer update --no-interaction --no-progress --no-ansi --no-scripts --no-plugins --no-audit --prefer-dist
+
+      - name: Verify pinned identities
+        run: |
+          php -r '$l=json_decode(file_get_contents("composer.lock"), true); $found=[]; foreach (["packages","packages-dev"] as $s) foreach (($l[$s]??[]) as $p) if (in_array($p["name"], ["laravel/framework","laravel/boost"], true)) { $ref=$p["source"]["reference"]??$p["dist"]["reference"]??""; echo $p["name"]." ".$p["version"]." ".$ref.PHP_EOL; $found[$p["name"]]=[$p["version"],$ref]; } if (($found["laravel/framework"][0]??null)!=="v12.41.1") exit(11); if (($found["laravel/boost"][1]??null)!=="c0b668cd2d5e565507b5bd05ee71f8e322c660e7") exit(12);'
+
+      - name: Upload generated lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: lclab-composer-lock
+          path: .lclab-lock/composer.lock
+          if-no-files-found: error
+          retention-days: 1
