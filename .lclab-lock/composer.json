@@ -2,6 +2,7 @@
   "$schema": "https://getcomposer.org/schema.json",
   "name": "laravel-context-lab/named-route-lock-authoring",
   "description": "Public-only Composer lock authoring input for Laravel Context Lab",
+  "license": "proprietary",
   "type": "project",
   "require": {
     "php": "^8.3",
